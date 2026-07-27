@@ -19,3 +19,9 @@
 {"beforeHandshake":false,"cause":{"code":"ETIMEDOUT"},"connectionGeneration":0,"errorLabelSet":{},"level":"error","message":"[500 Internal Error] Path: /api/card/8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918 | Error: connect ETIMEDOUT 159.41.197.44:27017, connect ENETUNREACH 64:ff9b::9f29:c52c:27017 - Local (:::0) connect ETIMEDOUT 159.41.197.44:27017, connect ENETUNREACH 64:ff9b::9f29:c52c:27017 - Local (:::0)","stack":"MongoNetworkError: connect ETIMEDOUT 159.41.197.44:27017, connect ENETUNREACH 64:ff9b::9f29:c52c:27017 - Local (:::0)\n    at TLSSocket.<anonymous> (/home/aditya/clones/Card/swasthyatap-next/node_modules/mongodb/lib/cmap/connect.js:314:44)\n    at Object.onceWrapper (node:events:623:26)\n    at TLSSocket.emit (node:events:508:28)\n    at emitErrorNT (node:internal/streams/destroy:170:8)\n    at emitErrorCloseNT (node:internal/streams/destroy:129:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","timestamp":"2026-07-25 18:45:35:4535"}
 {"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-07-25 18:45:41:4541"}
 {"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-07-25 18:45:42:4542"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-07-25 19:00:15:015"}
+{"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-07-25 19:00:16:016"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-07-25 20:11:41:1141"}
+{"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-07-25 20:11:42:1142"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-07-26 13:38:53:3853"}
+{"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-07-26 13:38:54:3854"}

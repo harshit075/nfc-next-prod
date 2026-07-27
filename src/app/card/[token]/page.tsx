@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -10,43 +10,65 @@ import {
   Activity, Heart, Pill, ShieldCheck, UserCheck, X, Printer, Search, Filter
 } from 'lucide-react';
 import { IPrescription, IMedicalReport } from '@/models/Citizen';
+import { TRANSLATIONS } from '@/lib/translations';
+import { MEDICAL_DATA_TRANSLATIONS } from '@/lib/medicalTranslations';
 
-// Key translation dictionary for localized/database keys
-const TRANSLATION_MAP: Record<string, string> = {
-  // Navigation / Tabs
-  nav_profile: "Profile Overview",
-  reports_label: "Medical Reports",
-  prescriptions_label: "Prescriptions",
+const LANGUAGES = [
+  { code: 'English', name: 'English' },
+  { code: 'Hindi', name: 'हिन्दी (Hindi)' },
+  { code: 'Bengali', name: 'বাংলা (Bengali)' },
+  { code: 'Telugu', name: 'తెలుగు (Telugu)' },
+  { code: 'Tamil', name: 'தமிழ் (Tamil)' },
+  { code: 'Marathi', name: 'मराठी (Marathi)' },
+  { code: 'Gujarati', name: 'ગુજરાતી (Gujarati)' },
+  { code: 'Kannada', name: 'ಕನ್ನಡ (Kannada)' },
+  { code: 'Malayalam', name: 'മലയാളം (Malayalam)' },
+  { code: 'Punjabi', name: 'ਪੰਜਾਬੀ (Punjabi)' },
+  { code: 'Odia', name: 'ଓଡ଼ିଆ (Odia)' },
+  { code: 'Urdu', name: 'اردو (Urdu)' }
+];
 
-  // Report Titles
-  cbc_report: "Complete Blood Count (CBC)",
-  lipid_profile: "Lipid Profile",
-  thyroid_report: "Thyroid Profile (T3, T4, TSH)",
-  chest_xray: "Chest X-Ray (PA View)",
+const KEY_MAPPINGS: Record<string, string> = {
+  // Medicines
+  "paracetamol 500mg": "paracetamol",
+  "vitamin d3 60k iu": "vitamin_d3",
+  "1 tablet as needed": "tablet_needed",
+  "1 capsule weekly": "capsule_weekly",
   
-  // Issuers / Labs / Doctors
-  lab_name_city: "City Diagnostic Labs",
-  lab_name_apollo: "Apollo Diagnostics",
-  dr_amit_shah: "Dr. Amit Shah (MD, Cardiology)",
-  dr_patel: "Dr. Patel (General Physician)",
-  dr_singh: "Dr. Singh (Endocrinologist)",
-  apollo_pharmacy: "Apollo Pharmacy",
-  city_labs: "City Diagnostic Labs",
-
-  // Statuses
-  verified_report: "VERIFIED",
-  verified: "VERIFIED",
-  active: "ACTIVE",
-  completed: "COMPLETED",
+  // Allergies
+  "peanut allergy": "peanut_allergy",
+  "penicillin allergy": "penicillin_allergy",
   
-  // Generic
-  none: "None"
+  // Conditions
+  "asthma (mild)": "asthma",
+  "typhoid fever": "typhoid",
+  "none": "none",
+  
+  // Actions
+  "alert family": "alert_family",
+  "call 108": "call_108",
+  "share data": "share_data",
+  "with hospital": "with_hospital",
+  "ambulance": "ambulance",
+  
+  // Tabs
+  "profile overview": "nav_profile",
+  "medical reports": "reports_label",
+  "prescriptions": "prescriptions_label",
+  
+  // Headers & Subsections
+  "active medications": "current_medications",
+  "medical conditions": "medical_conditions",
+  "emergency contacts": "emergency_contacts",
+  "insurance coverage": "insurance_schemes",
+  
+  // Header / Status
+  "card read successfully": "card_read_success",
+  "verified": "verified",
+  "active": "active",
+  "complete": "complete",
+  "completed": "complete"
 };
-
-function translate(key?: string): string {
-  if (!key) return 'None';
-  return TRANSLATION_MAP[key] || key;
-}
 
 export default function CardProfileViewer() {
   const params = useParams();
@@ -69,6 +91,51 @@ export default function CardProfileViewer() {
   const [contactsExpanded, setContactsExpanded] = useState(true);
   const [insuranceExpanded, setInsuranceExpanded] = useState(true);
 
+  // Language management
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('swasthyatap_lang');
+    if (savedLang && TRANSLATIONS[savedLang]) {
+      setSelectedLanguage(savedLang);
+    }
+  }, []);
+
+  const translate = (key?: string): string => {
+    if (!key) return '';
+    
+    const lang = selectedLanguage || 'English';
+    const medDict = MEDICAL_DATA_TRANSLATIONS[lang] || MEDICAL_DATA_TRANSLATIONS['English'] || {};
+    
+    // 1. Direct key matching in custom medical dictionary
+    if (medDict[key]) return medDict[key];
+    
+    // 2. Normalized matching in custom medical dictionary
+    const normalizedKey = key.toLowerCase().trim();
+    if (medDict[normalizedKey]) return medDict[normalizedKey];
+
+    // 3. Fallback to main TRANSLATIONS dictionary
+    const dict = TRANSLATIONS[selectedLanguage] || TRANSLATIONS['English'] || {};
+    if (dict[key]) return dict[key];
+
+    // 4. Normalized mapping lookup in main TRANSLATIONS
+    const mappedKey = KEY_MAPPINGS[normalizedKey];
+    if (mappedKey && dict[mappedKey]) return dict[mappedKey];
+    if (dict[normalizedKey]) return dict[normalizedKey];
+
+    // 5. English fallbacks
+    const engDict = TRANSLATIONS['English'] || {};
+    if (engDict[key]) return engDict[key];
+    
+    const engMedDict = MEDICAL_DATA_TRANSLATIONS['English'] || {};
+    if (engMedDict[key]) return engMedDict[key];
+    if (engMedDict[normalizedKey]) return engMedDict[normalizedKey];
+    
+    if (mappedKey && engDict[mappedKey]) return engDict[mappedKey];
+
+    return key;
+  };
+
   // Fetch citizen data
   const { data: citizen, isLoading, isError } = useQuery({
     queryKey: ['cardProfile', token],
@@ -85,7 +152,7 @@ export default function CardProfileViewer() {
       <div className="flex min-h-screen items-center justify-center bg-[#F1F5F9]">
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#018086] border-t-transparent"></div>
-          <p className="text-[#64748B] font-bold text-sm">Loading SwasthyaTap Profile...</p>
+          <p className="text-[#64748B] font-bold text-sm">{translate('loading_profile') || 'Loading SwasthyaTap Profile...'}</p>
         </div>
       </div>
     );
@@ -98,15 +165,15 @@ export default function CardProfileViewer() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-50">
             <AlertTriangle className="h-7 w-7 text-rose-500" />
           </div>
-          <h1 className="mt-5 text-xl font-bold text-[#0F172A]">Profile Not Found</h1>
+          <h1 className="mt-5 text-xl font-bold text-[#0F172A]">{translate('profile_not_found') || 'Profile Not Found'}</h1>
           <p className="mt-3 text-sm text-[#64748B] leading-relaxed">
-            The profile could not be loaded. Please ensure the NFC card is registered and correctly configured.
+            {translate('profile_load_error_desc') || 'The profile could not be loaded. Please ensure the NFC card is registered and correctly configured.'}
           </p>
           <button
             onClick={() => router.push('/')}
             className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-sm font-bold transition cursor-pointer"
           >
-            Go Back
+            {translate('go_back') || 'Go Back'}
           </button>
         </div>
       </div>
@@ -132,11 +199,16 @@ export default function CardProfileViewer() {
 
   // Filter Prescriptions
   const filteredPrescriptions = (citizen.prescriptions || []).filter((rx: IPrescription) => {
+    const docName = translate(rx.doctorName).toLowerCase();
+    const hospName = translate(rx.hospitalName).toLowerCase();
+    const diag = translate(rx.diagnosis).toLowerCase();
+    const query = rxSearchQuery.toLowerCase();
+
     const matchesSearch = 
-      (rx.doctorName || '').toLowerCase().includes(rxSearchQuery.toLowerCase()) ||
-      (rx.hospitalName || '').toLowerCase().includes(rxSearchQuery.toLowerCase()) ||
-      (rx.diagnosis || '').toLowerCase().includes(rxSearchQuery.toLowerCase()) ||
-      (rx.rxList || []).some((m: any) => (m.medicineName || '').toLowerCase().includes(rxSearchQuery.toLowerCase()));
+      docName.includes(query) ||
+      hospName.includes(query) ||
+      diag.includes(query) ||
+      (rx.rxList || []).some((m: any) => translate(m.medicineName).toLowerCase().includes(query));
 
     const matchesStatus = 
       rxStatusFilter === 'all' || 
@@ -165,19 +237,35 @@ export default function CardProfileViewer() {
             <HeartEcgLogo />
             <div>
               <span className="text-xl md:text-2xl font-extrabold tracking-tight text-[#0F172A] font-outfit">
-                SwasthyaTap
+                {translate('SwasthyaTap')}
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 bg-teal-50 text-[#0F766E] border border-teal-200 rounded-md font-bold">
-                NFC Public Portal
+                {translate('nfc_public_portal')}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-slate-600 text-xs font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Token Encrypted</span>
+            {/* Language Selector Dropdown */}
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-bold text-slate-500 hidden lg:inline-block">🌐:</span>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => {
+                  const newLang = e.target.value;
+                  setSelectedLanguage(newLang);
+                  localStorage.setItem('swasthyatap_lang', newLang);
+                }}
+                className="px-2.5 py-1.5 text-xs font-extrabold bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-teal-500 transition cursor-pointer"
+              >
+                {LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div className="flex items-center gap-1.5 px-3 py-1 bg-[#F0FDF4] border border-[#DCFCE7] rounded-full text-[#15803D] text-xs font-bold shadow-xs">
               <Check className="h-3.5 w-3.5 text-[#16A34A] stroke-[3]" />
               <span>{translate('verified')}</span>
@@ -238,11 +326,11 @@ export default function CardProfileViewer() {
                     {/* Details */}
                     <div className="space-y-1.5 min-w-0 flex-1">
                       <h2 className="text-xl md:text-2xl font-bold text-[#0F172A] truncate leading-tight font-outfit">
-                        {citizen.fullName}
+                        {translate(citizen.fullName)}
                       </h2>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs md:text-sm font-semibold text-[#475569]">
-                          {citizen.age ? `${citizen.age} Years Old` : 'Unknown Age'}
+                          {citizen.age ? `${citizen.age} ${translate('years_old') || 'Years Old'}` : (translate('unknown_age') || 'Unknown Age')}
                         </span>
                         <span className="text-slate-300">•</span>
                         <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-bold">
@@ -264,9 +352,9 @@ export default function CardProfileViewer() {
                       </div>
                       <div>
                         <span className="text-[11px] font-extrabold text-[#64748B] tracking-wider uppercase block">
-                          Blood Group Metric
+                          {translate('blood_group')}
                         </span>
-                        <span className="text-xs text-slate-500 font-medium">Emergency Telemetry</span>
+                        <span className="text-xs text-slate-500 font-medium">{translate('emergency_record')}</span>
                       </div>
                     </div>
                     <div className="px-4 py-1.5 bg-[#FEF2F2] border border-[#FCA5A5] rounded-xl text-center shadow-2xs">
@@ -282,7 +370,7 @@ export default function CardProfileViewer() {
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-[#E11D48]" />
                     <span className="text-xs font-extrabold text-[#9F1239] tracking-wider uppercase">
-                      Critical Allergies Detected
+                      {translate('critical_allergies_detected')}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -291,12 +379,12 @@ export default function CardProfileViewer() {
                         <div key={i} className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-[#FDA4AF] rounded-full shadow-xs">
                           <span className="w-2 h-2 rounded-full bg-[#E11D48]" />
                           <span className="text-xs font-bold text-[#9F1239] uppercase">
-                            {allergy}
+                            {translate(allergy)}
                           </span>
                         </div>
                       ))
                     ) : (
-                      <span className="text-sm font-medium text-[#64748B] italic">None reported</span>
+                      <span className="text-sm font-medium text-[#64748B] italic">{translate('none')}</span>
                     )}
                   </div>
                 </div>
@@ -313,8 +401,8 @@ export default function CardProfileViewer() {
                         <Bell className="h-6 w-6 text-white stroke-[2.5]" />
                       </div>
                       <div>
-                        <h3 className="text-base font-black tracking-tight leading-tight">ALERT FAMILY</h3>
-                        <p className="text-xs font-medium text-white/85 mt-0.5">Send instant SOS broadcasts</p>
+                        <h3 className="text-base font-black tracking-tight leading-tight uppercase">{translate('alert_family')}</h3>
+                        <p className="text-xs font-medium text-white/85 mt-0.5">{translate('alert_family_sub')}</p>
                       </div>
                     </div>
                     <span className="text-white/80 font-bold shrink-0 text-lg group-hover:translate-x-1 transition">➔</span>
@@ -330,8 +418,8 @@ export default function CardProfileViewer() {
                         <Phone className="h-4.5 w-4.5 text-white fill-current stroke-none" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-extrabold leading-tight">Call 108</h4>
-                        <p className="text-[10.5px] font-medium text-white/85 mt-0.5">Ambulance</p>
+                        <h4 className="text-sm font-extrabold leading-tight">{translate('call_108')}</h4>
+                        <p className="text-[10.5px] font-medium text-white/85 mt-0.5">{translate('ambulance')}</p>
                       </div>
                     </button>
 
@@ -343,8 +431,8 @@ export default function CardProfileViewer() {
                         <span className="text-sm font-bold text-white">🏥</span>
                       </div>
                       <div>
-                        <h4 className="text-sm font-extrabold leading-tight">Share Data</h4>
-                        <p className="text-[10.5px] font-medium text-white/85 mt-0.5">With Hospital</p>
+                        <h4 className="text-sm font-extrabold leading-tight">{translate('share_data')}</h4>
+                        <p className="text-[10.5px] font-medium text-white/85 mt-0.5">{translate('with_hospital')}</p>
                       </div>
                     </button>
                   </div>
@@ -354,7 +442,7 @@ export default function CardProfileViewer() {
                 <div className="pt-1 flex items-center justify-center gap-2 text-center text-[#64748B]">
                   <Lock className="h-3.5 w-3.5 shrink-0" />
                   <p className="text-xs font-semibold leading-normal">
-                    Telemetry data encrypted • SwasthyaTap NFC • HIPAA + DPDP Compliant
+                    {translate('data_secure')} • SwasthyaTap NFC • {translate('hipaa_dpdp_compliant')}
                   </p>
                 </div>
 
@@ -371,10 +459,10 @@ export default function CardProfileViewer() {
                     </div>
                     <div>
                       <h3 className="text-sm md:text-base font-bold tracking-wide">
-                        Card Read Successfully
+                        {translate('card_read_success')}
                       </h3>
                       <p className="text-xs text-white/85 font-medium hidden sm:block">
-                        Direct hardware authentication verified
+                        {translate('data_secure')}
                       </p>
                     </div>
                   </div>
@@ -399,7 +487,7 @@ export default function CardProfileViewer() {
                         >
                           <div className="flex items-center gap-3">
                             <span className="p-2 bg-teal-50 text-[#0F766E] rounded-xl font-bold text-sm">💊</span>
-                            <span className="text-base font-bold text-[#0F172A]">Active Medications</span>
+                            <span className="text-base font-bold text-[#0F172A]">{translate('Active Medications')}</span>
                           </div>
                           {medsExpanded ? <ChevronUp className="h-5 w-5 text-[#64748B]" /> : <ChevronDown className="h-5 w-5 text-[#64748B]" />}
                         </button>
@@ -410,18 +498,18 @@ export default function CardProfileViewer() {
                                 <div key={i} className="p-4 flex items-center justify-between text-xs font-semibold">
                                   <div className="flex items-center gap-2.5">
                                     <span className="w-2 h-2 rounded-full bg-[#0F766E]" />
-                                    <span className="font-bold text-[#1E293B] text-sm">{med}</span>
+                                    <span className="font-bold text-[#1E293B] text-sm">{translate(med)}</span>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <span className="px-2.5 py-1 bg-[#E0F2FE] text-[#0369A1] rounded-md font-bold text-[11px]">
-                                      As Prescribed
+                                      {translate('As Prescribed')}
                                     </span>
-                                    <span className="text-[#64748B] font-semibold text-xs">Daily</span>
+                                    <span className="text-[#64748B] font-semibold text-xs">{translate('Daily')}</span>
                                   </div>
                                 </div>
                               ))
                             ) : (
-                              <div className="p-6 text-center text-xs text-[#64748B] italic">No active prescriptions</div>
+                              <div className="p-6 text-center text-xs text-[#64748B] italic">{translate('no_active_prescriptions')}</div>
                             )}
                           </div>
                         )}
@@ -440,7 +528,7 @@ export default function CardProfileViewer() {
                         >
                           <div className="flex items-center gap-3">
                             <span className="p-2 bg-rose-50 text-[#DC2626] rounded-xl font-bold text-sm">❤️</span>
-                            <span className="text-base font-bold text-[#0F172A]">Medical Conditions</span>
+                            <span className="text-base font-bold text-[#0F172A]">{translate('Medical Conditions')}</span>
                           </div>
                           {conditionsExpanded ? <ChevronUp className="h-5 w-5 text-[#64748B]" /> : <ChevronDown className="h-5 w-5 text-[#64748B]" />}
                         </button>
@@ -451,15 +539,15 @@ export default function CardProfileViewer() {
                                 <div key={i} className="p-4 flex items-center justify-between text-xs font-semibold">
                                   <div className="flex items-center gap-2.5">
                                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500/30 border-2 border-amber-500" />
-                                    <span className="font-bold text-[#1E293B] text-sm">{condition}</span>
+                                    <span className="font-bold text-[#1E293B] text-sm">{translate(condition)}</span>
                                   </div>
                                   <span className="px-2.5 py-1 bg-orange-50 text-[#F97316] rounded-md font-bold text-[11px]">
-                                    Monitored
+                                    {translate('Monitored')}
                                   </span>
                                 </div>
                               ))
                             ) : (
-                              <div className="p-6 text-center text-xs text-[#64748B] italic">No conditions reported</div>
+                              <div className="p-6 text-center text-xs text-[#64748B] italic">{translate('no_conditions_reported')}</div>
                             )}
                           </div>
                         )}
@@ -478,7 +566,7 @@ export default function CardProfileViewer() {
                         >
                           <div className="flex items-center gap-3">
                             <span className="p-2 bg-emerald-50 text-[#16A34A] rounded-xl font-bold text-sm">📞</span>
-                            <span className="text-base font-bold text-[#0F172A]">Emergency Contacts</span>
+                            <span className="text-base font-bold text-[#0F172A]">{translate('Emergency Contacts')}</span>
                           </div>
                           {contactsExpanded ? <ChevronUp className="h-5 w-5 text-[#64748B]" /> : <ChevronDown className="h-5 w-5 text-[#64748B]" />}
                         </button>
@@ -488,19 +576,19 @@ export default function CardProfileViewer() {
                               citizen.emergencyContacts.map((contact: any, i: number) => (
                                 <div key={i} className="p-4 flex items-center justify-between gap-3 text-xs">
                                   <div className="space-y-0.5">
-                                    <p className="font-bold text-[#1E293B] text-sm">{contact.name} ({contact.relation})</p>
+                                    <p className="font-bold text-[#1E293B] text-sm">{translate(contact.name)} ({translate(contact.relation)})</p>
                                     <p className="text-[#64748B] font-semibold text-xs">{contact.phone}</p>
                                   </div>
                                   <a
                                     href={`tel:${contact.phone}`}
                                     className="px-3.5 py-1.5 bg-[#F0FDF4] border border-[#86EFAC] rounded-xl text-[#16A34A] font-extrabold tracking-wide text-xs hover:bg-emerald-50 transition cursor-pointer shrink-0"
                                   >
-                                    CALL
+                                    {translate('call')}
                                   </a>
                                 </div>
                               ))
                             ) : (
-                              <div className="p-6 text-center text-xs text-[#64748B] italic">No contacts registered</div>
+                              <div className="p-6 text-center text-xs text-[#64748B] italic">{translate('no_contacts_registered') || 'No contacts registered'}</div>
                             )}
                           </div>
                         )}
@@ -519,7 +607,7 @@ export default function CardProfileViewer() {
                         >
                           <div className="flex items-center gap-3">
                             <span className="p-2 bg-blue-50 text-[#2563EB] rounded-xl font-bold text-sm">🛡️</span>
-                            <span className="text-base font-bold text-[#0F172A]">Insurance Coverage</span>
+                            <span className="text-base font-bold text-[#0F172A]">{translate('Insurance Coverage')}</span>
                           </div>
                           {insuranceExpanded ? <ChevronUp className="h-5 w-5 text-[#64748B]" /> : <ChevronDown className="h-5 w-5 text-[#64748B]" />}
                         </button>
@@ -531,16 +619,16 @@ export default function CardProfileViewer() {
                               </div>
                               <div>
                                 <p className="font-bold text-[#1E293B] text-sm truncate max-w-[160px] md:max-w-[200px]">
-                                  {citizen.insuranceCompany || 'No Active Insurance'}
+                                  {translate(citizen.insuranceCompany) || translate('none')}
                                 </p>
                                 <span className="inline-block mt-1 px-2.5 py-0.5 bg-[#E0F2FE] text-[#0369A1] rounded-md font-bold text-[10px]">
-                                  {citizen.insuranceCompany ? 'ACTIVE' : 'INACTIVE'}
+                                  {citizen.insuranceCompany ? translate('active') : translate('disabled')}
                                 </span>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-[10px] text-[#94A3B8] font-extrabold uppercase tracking-wide">Policy No</p>
-                              <p className="text-xs font-bold text-[#334155] mt-0.5">{citizen.insurancePolicyNumber || 'N/A'}</p>
+                              <p className="text-[10px] text-[#94A3B8] font-extrabold uppercase tracking-wide">{translate('policy_number')}</p>
+                              <p className="text-xs font-bold text-[#334155] mt-0.5">{citizen.insurancePolicyNumber || translate('none')}</p>
                             </div>
                           </div>
                         )}
@@ -568,12 +656,12 @@ export default function CardProfileViewer() {
                   <FileText className="h-7 w-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold">Medical Diagnostic Reports</h3>
-                  <p className="text-xs md:text-sm text-white/90 font-medium">Encrypted clinical file storage retrieved from NFC tag</p>
+                  <h3 className="text-lg md:text-xl font-bold">{translate('medical_reports_sec')}</h3>
+                  <p className="text-xs md:text-sm text-white/90 font-medium">{translate('medical_reports_sub')}</p>
                 </div>
               </div>
               <div className="px-4 py-2 bg-white/15 rounded-xl border border-white/20 text-xs font-bold shrink-0">
-                {filteredReports.length} Available Documents
+                {filteredReports.length} {translate('files_count')}
               </div>
             </div>
 
@@ -582,7 +670,7 @@ export default function CardProfileViewer() {
               <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search reports by title, doctor name, or lab..."
+                placeholder={translate('search_hint')}
                 value={reportSearchQuery}
                 onChange={(e) => setReportSearchQuery(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs md:text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0F766E] shadow-2xs transition"
@@ -621,12 +709,12 @@ export default function CardProfileViewer() {
                         className="flex-1 py-2.5 px-4 bg-[#F0FDF4] hover:bg-emerald-100 border border-emerald-200 rounded-xl text-[#0F766E] text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer"
                       >
                         <Eye className="h-4 w-4" />
-                        View Full Details
+                        {translate('view_details')}
                       </button>
                       <button
                         onClick={() => alert(`Downloading verified PDF for ${translate(report.title_key)}...`)}
                         className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 text-xs font-bold transition cursor-pointer"
-                        title="Download PDF"
+                        title={translate('save_pdf')}
                       >
                         <Download className="h-4 w-4" />
                       </button>
@@ -635,7 +723,7 @@ export default function CardProfileViewer() {
                 ))
               ) : (
                 <div className="col-span-full bg-white p-12 rounded-3xl border border-slate-200 text-center text-sm font-semibold text-[#64748B]">
-                  No matching medical reports found
+                  {translate('none')}
                 </div>
               )}
             </div>
@@ -654,12 +742,12 @@ export default function CardProfileViewer() {
                   <Pill className="h-7 w-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold">Digital Prescriptions</h3>
-                  <p className="text-xs md:text-sm text-white/90 font-medium">Verified doctor prescriptions and Rx medication logs from database</p>
+                  <h3 className="text-lg md:text-xl font-bold">{translate('receipts_sec')}</h3>
+                  <p className="text-xs md:text-sm text-white/90 font-medium">{translate('verified_digital_rx')}</p>
                 </div>
               </div>
               <div className="px-4 py-2 bg-white/15 rounded-xl border border-white/20 text-xs font-bold shrink-0">
-                {filteredPrescriptions.length} Prescriptions Listed
+                {filteredPrescriptions.length} {translate('files_count')}
               </div>
             </div>
 
@@ -670,7 +758,7 @@ export default function CardProfileViewer() {
                 <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search doctor name, hospital, diagnosis, or medicine..."
+                  placeholder={translate('search_hint')}
                   value={rxSearchQuery}
                   onChange={(e) => setRxSearchQuery(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs md:text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0284C7] shadow-2xs transition"
@@ -689,7 +777,7 @@ export default function CardProfileViewer() {
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    {st}
+                    {translate(st)}
                   </button>
                 ))}
               </div>
@@ -708,30 +796,30 @@ export default function CardProfileViewer() {
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <span className="text-3xl font-black text-[#0284C7] font-outfit">Rx</span>
+                          <span className="text-3xl font-black text-[#0284C7] font-outfit">{translate('rx') || 'Rx'}</span>
                           <div>
                             <h4 className="font-extrabold text-[#0F172A] text-lg leading-tight">
-                              {rx.doctorName || 'Doctor Prescription'}
+                              {translate(rx.doctorName) || translate('verified_digital_rx')}
                             </h4>
-                            <p className="text-xs font-semibold text-slate-500">{rx.qualification}</p>
+                            <p className="text-xs font-semibold text-slate-500">{translate(rx.qualification)}</p>
                           </div>
                         </div>
                         <span className={`px-3 py-1 rounded-full font-extrabold text-xs shrink-0 ${
                           rx.status === 'Active' ? 'bg-[#E0F2FE] text-[#0369A1] border border-sky-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
                         }`}>
-                          {rx.status || 'Active'}
+                          {translate(rx.status || 'Active')}
                         </span>
                       </div>
 
                       <div className="p-3 bg-slate-50/90 rounded-2xl border border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
-                        <span className="font-bold text-[#0F766E]">🏥 {rx.hospitalName}</span>
+                        <span className="font-bold text-[#0F766E]">🏥 {translate(rx.hospitalName)}</span>
                         <span className="font-semibold text-slate-500">📅 {rx.date}</span>
                       </div>
 
                       {/* Diagnosis Banner */}
                       <div className="p-3.5 bg-sky-50/80 rounded-2xl border border-sky-100">
-                        <span className="text-[10px] font-extrabold text-[#0369A1] uppercase tracking-wider block">Clinical Diagnosis</span>
-                        <p className="text-sm font-bold text-slate-900 mt-0.5">{rx.diagnosis || 'General Consultation'}</p>
+                        <span className="text-[10px] font-extrabold text-[#0369A1] uppercase tracking-wider block">{translate('diagnosis')}</span>
+                        <p className="text-sm font-bold text-slate-900 mt-0.5">{translate(rx.diagnosis) || translate('none')}</p>
                       </div>
                     </div>
 
@@ -740,7 +828,7 @@ export default function CardProfileViewer() {
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-slate-700 flex items-center gap-1.5">
                           <Pill className="h-3.5 w-3.5 text-[#0284C7]" />
-                          Prescribed Medicines ({rx.rxList ? rx.rxList.length : 0})
+                          {translate('current_medications')} ({rx.rxList ? rx.rxList.length : 0})
                         </span>
                       </div>
                       
@@ -749,17 +837,17 @@ export default function CardProfileViewer() {
                           rx.rxList.map((med: any, idx: number) => (
                             <div key={idx} className="p-3 flex items-center justify-between gap-2 bg-slate-50/40">
                               <div>
-                                <span className="font-bold text-slate-800 block text-xs">{med.medicineName}</span>
-                                {med.instructions && <span className="text-[10.5px] text-slate-500">{med.instructions}</span>}
+                                <span className="font-bold text-slate-800 block text-xs">{translate(med.medicineName)}</span>
+                                {med.instructions && <span className="text-[10.5px] text-slate-500">{translate(med.instructions)}</span>}
                               </div>
                               <div className="text-right shrink-0">
-                                <span className="font-bold text-[#0284C7] block text-xs">{med.dosage}</span>
-                                <span className="text-[10.5px] text-slate-500 font-medium">{med.frequency}</span>
+                                <span className="font-bold text-[#0284C7] block text-xs">{translate(med.dosage)}</span>
+                                <span className="text-[10.5px] text-slate-500 font-medium">{translate(med.frequency)}</span>
                               </div>
                             </div>
                           ))
                         ) : (
-                          <div className="p-4 text-center text-slate-400 italic">No medicines attached</div>
+                          <div className="p-4 text-center text-slate-400 italic">{translate('none')}</div>
                         )}
                       </div>
                     </div>
@@ -767,8 +855,8 @@ export default function CardProfileViewer() {
                     {/* Doctor Notes Preview */}
                     {rx.doctorNotes && (
                       <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200/80 text-xs">
-                        <span className="font-bold text-amber-900 block text-[10.5px] uppercase">Doctor Notes:</span>
-                        <p className="text-slate-700 font-medium mt-0.5 line-clamp-2">{rx.doctorNotes}</p>
+                        <span className="font-bold text-amber-900 block text-[10.5px] uppercase">{translate('personal_info_sub')}:</span>
+                        <p className="text-slate-700 font-medium mt-0.5 line-clamp-2">{translate(rx.doctorNotes)}</p>
                       </div>
                     )}
 
@@ -779,12 +867,12 @@ export default function CardProfileViewer() {
                         className="flex-1 py-2.5 px-4 bg-[#F0F9FF] hover:bg-sky-100 border border-sky-200 rounded-xl text-[#0284C7] text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer"
                       >
                         <Eye className="h-4 w-4" />
-                        View Rx Document
+                        {translate('view_details')}
                       </button>
                       <button
-                        onClick={() => alert(`Downloading signed Rx PDF for ${rx.doctorName}...`)}
+                        onClick={() => alert(`Downloading signed Rx PDF for ${translate(rx.doctorName)}...`)}
                         className="p-2.5 bg-slate-800 hover:bg-slate-900 rounded-xl text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-                        title="Download Rx PDF"
+                        title={translate('save_pdf')}
                       >
                         <Download className="h-4 w-4" />
                       </button>
@@ -794,7 +882,7 @@ export default function CardProfileViewer() {
                 ))
               ) : (
                 <div className="col-span-full bg-white p-12 rounded-3xl border border-slate-200 text-center text-sm font-semibold text-[#64748B]">
-                  No matching prescriptions found
+                  {translate('none')}
                 </div>
               )}
             </div>
@@ -837,16 +925,16 @@ export default function CardProfileViewer() {
             {/* Report Metadata */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs">
               <div>
-                <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">Doctor</span>
+                <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">{translate('doctor')}</span>
                 <span className="font-bold text-slate-800">{translate(selectedReport.doctor_key)}</span>
               </div>
               <div>
-                <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">Sample Type</span>
-                <span className="font-bold text-slate-800">{(selectedReport as any).sampleType || 'Whole Blood / Clinical'}</span>
+                <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">{translate('sample_type') || 'Sample Type'}</span>
+                <span className="font-bold text-slate-800">{translate((selectedReport as any).sampleType || 'whole blood (edta)')}</span>
               </div>
               <div>
-                <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">Lab Ref No.</span>
-                <span className="font-bold text-slate-800">{(selectedReport as any).labRefNo || 'LAB-9901-X'}</span>
+                <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">{translate('lab_ref_no') || 'Lab Ref No.'}</span>
+                <span className="font-bold text-slate-800">{translate((selectedReport as any).labRefNo || '') || ((selectedReport as any).labRefNo || 'N/A')}</span>
               </div>
             </div>
 
@@ -854,24 +942,24 @@ export default function CardProfileViewer() {
             <div className="space-y-3">
               <h4 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
                 <Activity className="h-4 w-4 text-[#0F766E]" />
-                Test Parameter Results
+                {translate('test_parameter_results') || 'Test Parameter Results'}
               </h4>
               <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 text-xs">
                 <div className="bg-slate-100/70 p-3 grid grid-cols-12 font-bold text-slate-600">
-                  <span className="col-span-5">Parameter</span>
-                  <span className="col-span-3 text-center">Result</span>
-                  <span className="col-span-4 text-right">Reference Range</span>
+                  <span className="col-span-5">{translate('parameter') || 'Parameter'}</span>
+                  <span className="col-span-3 text-center">{translate('result') || 'Result'}</span>
+                  <span className="col-span-4 text-right">{translate('reference_range') || 'Reference Range'}</span>
                 </div>
                 {((selectedReport as any).testParameters && (selectedReport as any).testParameters.length > 0) ? (
                   (selectedReport as any).testParameters.map((param: any, idx: number) => (
-                    <div key={idx} className="p-3 grid grid-cols-12 items-center font-medium">
-                      <span className="col-span-5 font-bold text-slate-800">{param.parameter}</span>
-                      <span className="col-span-3 text-center font-extrabold text-[#0F766E]">{param.result}</span>
-                      <span className="col-span-4 text-right text-slate-500">{param.normalRange}</span>
-                    </div>
+                     <div key={idx} className="p-3 grid grid-cols-12 items-center font-medium">
+                       <span className="col-span-5 font-bold text-slate-800">{translate(param.parameter)}</span>
+                       <span className="col-span-3 text-center font-extrabold text-[#0F766E]">{translate(param.result)}</span>
+                       <span className="col-span-4 text-right text-slate-500">{translate(param.normalRange)}</span>
+                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-slate-500 italic">Imaging diagnostic report details attached</div>
+                  <div className="p-4 text-center text-slate-500 italic">{translate('imaging_diagnostic_details') || 'Imaging diagnostic report details attached'}</div>
                 )}
               </div>
             </div>
@@ -879,8 +967,33 @@ export default function CardProfileViewer() {
             {/* Doctor Remarks */}
             {(selectedReport as any).doctorRemarks && (
               <div className="bg-teal-50/60 p-4 rounded-2xl border border-teal-200/80 text-xs space-y-1">
-                <span className="font-extrabold text-[#0F766E] block uppercase tracking-wider text-[10.5px]">Pathologist Remarks</span>
-                <p className="text-slate-700 font-medium leading-relaxed">{(selectedReport as any).doctorRemarks}</p>
+                <span className="font-extrabold text-[#0F766E] block uppercase tracking-wider text-[10.5px]">{translate('doctor_remarks') || 'Pathologist Remarks'}</span>
+                <p className="text-slate-700 font-medium leading-relaxed">{translate((selectedReport as any).doctorRemarks)}</p>
+              </div>
+            )}
+
+            {/* Embedded PDF Viewer (if PDF URL exists) */}
+            {(selectedReport as any).pdfUrl ? (
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-[#0F766E]" />
+                  {translate('attached_pdf') || 'Attached Diagnostic Document (PDF)'}
+                </span>
+                <iframe
+                  src={(selectedReport as any).pdfUrl}
+                  className="w-full h-72 rounded-2xl border border-slate-200 shadow-inner bg-slate-50"
+                  title="Medical Report PDF"
+                />
+              </div>
+            ) : (
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between text-xs text-slate-600">
+                <span className="font-medium">📄 {translate('pdf_scan_cloud') || 'Diagnostic PDF Scan Available on Cloud Storage'}</span>
+                <button
+                  onClick={() => alert('Opening simulated Cloudinary PDF document view...')}
+                  className="px-3 py-1 bg-white border border-slate-300 rounded-lg text-slate-800 font-bold hover:bg-slate-100 transition cursor-pointer"
+                >
+                  {translate('view_original_pdf') || 'View Original PDF Scan'}
+                </button>
               </div>
             )}
 
@@ -890,14 +1003,14 @@ export default function CardProfileViewer() {
                 onClick={() => setSelectedReport(null)}
                 className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition"
               >
-                Close
+                {translate('close')}
               </button>
               <button
                 onClick={() => alert(`Downloading verified PDF report for ${translate(selectedReport.title_key)}...`)}
                 className="px-5 py-2.5 bg-[#0F766E] hover:bg-[#0D9488] text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow-sm transition"
               >
                 <Download className="h-4 w-4" />
-                Download PDF
+                {translate('save_pdf')}
               </button>
             </div>
 
@@ -922,53 +1035,53 @@ export default function CardProfileViewer() {
             <div className="flex items-start justify-between pr-8 border-b border-slate-100 pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-black text-[#0284C7] font-outfit">Rx</span>
-                  <h3 className="text-xl font-bold text-[#0F172A]">{selectedPrescription.doctorName}</h3>
+                  <span className="text-2xl font-black text-[#0284C7] font-outfit">{translate('rx') || 'Rx'}</span>
+                  <h3 className="text-xl font-bold text-[#0F172A]">{translate(selectedPrescription.doctorName)}</h3>
                 </div>
-                <p className="text-xs text-slate-500 font-semibold mt-0.5">{selectedPrescription.qualification}</p>
-                <p className="text-xs text-[#0F766E] font-bold mt-0.5">{selectedPrescription.hospitalName}</p>
+                <p className="text-xs text-slate-500 font-semibold mt-0.5">{translate(selectedPrescription.qualification)}</p>
+                <p className="text-xs text-[#0F766E] font-bold mt-0.5">{translate(selectedPrescription.hospitalName)}</p>
               </div>
               <div className="text-right">
                 <span className="px-3 py-1 bg-sky-50 text-[#0284C7] border border-sky-200 rounded-full font-bold text-xs">
-                  {selectedPrescription.status || 'Active'}
+                  {translate(selectedPrescription.status || 'Active')}
                 </span>
-                <p className="text-xs text-slate-400 font-medium mt-1">Date: {selectedPrescription.date}</p>
+                <p className="text-xs text-slate-400 font-medium mt-1">{translate('date') || 'Date'}: {selectedPrescription.date}</p>
               </div>
             </div>
 
             {/* Diagnosis Banner */}
             <div className="bg-sky-50/70 p-4 rounded-2xl border border-sky-100 text-xs">
-              <span className="text-[10.5px] font-bold text-[#0369A1] uppercase tracking-wider block">Clinical Diagnosis</span>
-              <p className="text-base font-extrabold text-[#0F172A] mt-0.5">{selectedPrescription.diagnosis}</p>
+              <span className="text-[10.5px] font-bold text-[#0369A1] uppercase tracking-wider block">{translate('diagnosis')}</span>
+              <p className="text-base font-extrabold text-[#0F172A] mt-0.5">{translate(selectedPrescription.diagnosis)}</p>
             </div>
 
             {/* Prescribed Rx Medications Table */}
             <div className="space-y-3">
               <h4 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
                 <Pill className="h-4 w-4 text-[#0284C7]" />
-                Prescribed Medications (Rx)
+                {translate('current_medications')} (Rx)
               </h4>
               <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 text-xs">
                 <div className="bg-slate-100/70 p-3 grid grid-cols-12 font-bold text-slate-600">
-                  <span className="col-span-4">Medicine</span>
-                  <span className="col-span-3">Dosage</span>
-                  <span className="col-span-3">Frequency</span>
-                  <span className="col-span-2 text-right">Duration</span>
+                  <span className="col-span-4">{translate('medicine') || 'Medicine'}</span>
+                  <span className="col-span-3">{translate('dosage') || 'Dosage'}</span>
+                  <span className="col-span-3">{translate('frequency') || 'Frequency'}</span>
+                  <span className="col-span-2 text-right">{translate('duration') || 'Duration'}</span>
                 </div>
                 {selectedPrescription.rxList && selectedPrescription.rxList.length > 0 ? (
                   selectedPrescription.rxList.map((item: any, idx: number) => (
                     <div key={idx} className="p-3.5 grid grid-cols-12 items-center font-medium">
                       <div className="col-span-4">
-                        <p className="font-extrabold text-slate-900 text-xs">{item.medicineName}</p>
-                        {item.instructions && <p className="text-[10px] text-slate-500 mt-0.5">{item.instructions}</p>}
+                        <p className="font-extrabold text-slate-900 text-xs">{translate(item.medicineName)}</p>
+                        {item.instructions && <p className="text-[10px] text-slate-500 mt-0.5">{translate(item.instructions)}</p>}
                       </div>
-                      <span className="col-span-3 font-semibold text-slate-700">{item.dosage}</span>
-                      <span className="col-span-3 font-semibold text-[#0284C7]">{item.frequency}</span>
-                      <span className="col-span-2 text-right font-bold text-slate-800">{item.duration}</span>
+                      <span className="col-span-3 font-semibold text-slate-700">{translate(item.dosage)}</span>
+                      <span className="col-span-3 font-semibold text-[#0284C7]">{translate(item.frequency)}</span>
+                      <span className="col-span-2 text-right font-bold text-slate-800">{translate(item.duration)}</span>
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-slate-500 italic">No medications specified</div>
+                  <div className="p-4 text-center text-slate-500 italic">{translate('none')}</div>
                 )}
               </div>
             </div>
@@ -976,8 +1089,8 @@ export default function CardProfileViewer() {
             {/* Doctor Advice / Notes */}
             {selectedPrescription.doctorNotes && (
               <div className="bg-amber-50/70 p-4 rounded-2xl border border-amber-200/80 text-xs space-y-1">
-                <span className="font-extrabold text-amber-800 block uppercase tracking-wider text-[10.5px]">Doctor Instructions & Advice</span>
-                <p className="text-slate-800 font-medium leading-relaxed">{selectedPrescription.doctorNotes}</p>
+                <span className="font-extrabold text-amber-800 block uppercase tracking-wider text-[10.5px]">{translate('doctor_remarks') || 'Doctor Instructions & Advice'}</span>
+                <p className="text-slate-800 font-medium leading-relaxed">{translate(selectedPrescription.doctorNotes)}</p>
               </div>
             )}
 
@@ -987,21 +1100,21 @@ export default function CardProfileViewer() {
                 onClick={() => setSelectedPrescription(null)}
                 className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition"
               >
-                Close
+                {translate('close')}
               </button>
               <button
                 onClick={() => window.print()}
                 className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow-sm transition"
               >
                 <Printer className="h-4 w-4" />
-                Print Rx
+                {translate('print_rx') || 'Print Rx'}
               </button>
               <button
                 onClick={() => alert(`Downloading signed PDF prescription Rx...`)}
                 className="px-5 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow-sm transition"
               >
                 <Download className="h-4 w-4" />
-                Download Prescription PDF
+                {translate('save_pdf')}
               </button>
             </div>
 
