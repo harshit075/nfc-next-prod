@@ -24,6 +24,7 @@
 {"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-07-25 20:11:41:1141"}
 {"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-07-25 20:11:42:1142"}
 {"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-07-26 13:38:53:3853"}
+
 {"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-07-26 13:38:54:3854"}
 {"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-02 08:03:59:359"}
 {"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-08-02 08:04:00:40"}
