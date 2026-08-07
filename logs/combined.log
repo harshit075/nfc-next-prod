@@ -28,3 +28,7 @@
 {"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-02 08:03:59:359"}
 {"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-08-02 08:04:00:40"}
 {"level":"warn","message":"[Client/Operational Error] Path: /api/card/8ef84cf837d08507daefd0e839c6d5d33db414baa1566355fe5bd579de12993a | Code: 404 | Msg: This NFC card is invalid or deactivated.","timestamp":"2026-08-02 08:04:01:41"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-02 08:11:35:1135"}
+{"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-08-02 08:11:37:1137"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-02 08:18:31:1831"}
+{"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-08-02 08:18:32:1832"}

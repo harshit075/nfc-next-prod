@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import crypto from 'crypto';
 import nfcRepository from '@/repositories/nfcRepository';
 import { writeAuditLog } from '@/repositories/auditLogRepository';
 import AppError from '@/lib/utils/AppError';
@@ -30,39 +29,9 @@ export class NFCService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<NFCValidationResult> {
-    let card = await nfcRepository.findCardByToken(rawToken);
-    let patient = card ? (card.patientId as unknown as ICitizen) : null;
+    const card = await nfcRepository.findCardByToken(rawToken);
 
-    // 1. If not resolved via card token, check if rawToken is a 6-character profileId
-    if (!patient && rawToken.length === 6) {
-      const Citizen = mongoose.models.Citizen || mongoose.model<ICitizen>('Citizen');
-      const foundCitizen = await Citizen.findOne({ profileId: rawToken });
-      if (foundCitizen) {
-        patient = foundCitizen;
-        card = {
-          publicCardId: `card-${patient.profileId}-direct`,
-          _id: new mongoose.Types.ObjectId(),
-        } as any;
-      }
-    }
-
-    // 2. If still not resolved and rawToken is a 64-character hash, check if it's the SHA-256 fallback hash of a profileId
-    if (!patient && rawToken.length === 64) {
-      const Citizen = mongoose.models.Citizen || mongoose.model<ICitizen>('Citizen');
-      const citizens = await Citizen.find({});
-      const foundCitizen = citizens.find(
-        c => crypto.createHash('sha256').update(c.profileId).digest('hex') === rawToken
-      );
-      if (foundCitizen) {
-        patient = foundCitizen;
-        card = {
-          publicCardId: `card-${patient.profileId}-fallback`,
-          _id: new mongoose.Types.ObjectId(),
-        } as any;
-      }
-    }
-
-    if (!patient || !card) {
+    if (!card) {
       await writeAuditLog({
         action: 'nfc.card.scan',
         status: 'failure',
@@ -73,8 +42,15 @@ export class NFCService {
       throw new AppError('This NFC card is invalid or deactivated.', HTTP_STATUS.NOT_FOUND);
     }
 
+    // The patient should be populated on the card
+    const patient = card.patientId as unknown as ICitizen;
+
+    if (!patient) {
+      throw new AppError('No patient profile associated with this card.', HTTP_STATUS.NOT_FOUND);
+    }
+
     // Record the scan asynchronously without blocking the response
-    if (card._id && card.publicCardId !== `card-${patient.profileId}-direct` && card.publicCardId !== `card-${patient.profileId}-fallback`) {
+    if (card._id) {
       nfcRepository.recordScan(card._id.toString()).catch(() => null);
     }
 
