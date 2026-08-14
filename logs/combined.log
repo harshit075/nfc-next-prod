@@ -33,3 +33,16 @@
 {"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-08-02 08:11:37:1137"}
 {"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-02 08:18:31:1831"}
 {"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-08-02 08:18:32:1832"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-14 14:25:00:250"}
+{"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-08-14 14:25:02:252"}
+{"level":"info","message":"[DB Update] Updated existing citizen with ID: 6a66527d6a4ccc2b5f7313b8","timestamp":"2026-08-14 14:25:04:254"}
+{"level":"info","message":"[DB Update] Created NFCCard for raw token hash: 22ae6ae9f4480c1e28facb8730dcf4ede8c20dbd2f2271a3e8819c41aa34e379","timestamp":"2026-08-14 14:25:05:255"}
+{"level":"info","message":"[DB Update] Successfully executed DB seeding/update for token!","timestamp":"2026-08-14 14:25:05:255"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-14 15:09:17:917"}
+{"level":"error","message":"MongoDB connection failed: connect ETIMEDOUT 159.41.197.35:27017, connect ENETUNREACH 64:ff9b::9f29:c523:27017 - Local (:::0)","timestamp":"2026-08-14 15:09:20:920"}
+{"beforeHandshake":false,"cause":{"code":"ETIMEDOUT"},"connectionGeneration":0,"errorLabelSet":{},"level":"error","message":"[500 Internal Error] Path: /api/card/22ae6ae9f4480c1e28facb8730dcf4ede8c20dbd2f2271a3e8819c41aa34e379 | Error: connect ETIMEDOUT 159.41.197.35:27017, connect ENETUNREACH 64:ff9b::9f29:c523:27017 - Local (:::0) connect ETIMEDOUT 159.41.197.35:27017, connect ENETUNREACH 64:ff9b::9f29:c523:27017 - Local (:::0)","stack":"MongoNetworkError: connect ETIMEDOUT 159.41.197.35:27017, connect ENETUNREACH 64:ff9b::9f29:c523:27017 - Local (:::0)\n    at TLSSocket.<anonymous> (/home/aditya/clones/swasthyatap-next/node_modules/mongodb/lib/cmap/connect.js:314:44)\n    at Object.onceWrapper (node:events:623:26)\n    at TLSSocket.emit (node:events:508:28)\n    at emitErrorNT (node:internal/streams/destroy:170:8)\n    at emitErrorCloseNT (node:internal/streams/destroy:129:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","timestamp":"2026-08-14 15:09:20:920"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-14 15:10:10:1010"}
+{"level":"info","message":"MongoDB connection established successfully.","timestamp":"2026-08-14 15:10:11:1011"}
+{"level":"info","message":"[DB Update] Updated existing citizen with ID: 6a66527d6a4ccc2b5f7313b8","timestamp":"2026-08-14 15:10:13:1013"}
+{"level":"info","message":"[DB Update] Successfully executed DB seeding/update for token!","timestamp":"2026-08-14 15:10:13:1013"}
+{"level":"info","message":"Connecting to MongoDB database...","timestamp":"2026-08-14 15:17:52:1752"}
