@@ -101,6 +101,23 @@ export default function CardProfileViewer() {
     }
   }, []);
 
+  const formatUnderscores = (str: string): string => {
+    if (!str) return '';
+    let clean = str;
+    if (clean.endsWith('_label')) {
+      clean = clean.slice(0, -6);
+    } else if (clean.endsWith('_filter')) {
+      clean = clean.slice(0, -7);
+    }
+    if (!clean.includes('_')) {
+      return clean.charAt(0).toUpperCase() + clean.slice(1);
+    }
+    return clean
+      .split('_')
+      .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1) : '')
+      .join(' ');
+  };
+
   const translate = (key?: string): string => {
     if (!key) return '';
     
@@ -133,7 +150,7 @@ export default function CardProfileViewer() {
     
     if (mappedKey && engDict[mappedKey]) return engDict[mappedKey];
 
-    return key;
+    return formatUnderscores(key);
   };
 
   // Fetch citizen data

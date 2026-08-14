@@ -90,6 +90,23 @@ export default function Dashboard() {
     r.hospitalName.toLowerCase().includes(reportSearch.toLowerCase())
   ) || [];
 
+  const formatUnderscores = (str: string): string => {
+    if (!str) return '';
+    let clean = str;
+    if (clean.endsWith('_label')) {
+      clean = clean.slice(0, -6);
+    } else if (clean.endsWith('_filter')) {
+      clean = clean.slice(0, -7);
+    }
+    if (!clean.includes('_')) {
+      return clean.charAt(0).toUpperCase() + clean.slice(1);
+    }
+    return clean
+      .split('_')
+      .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1) : '')
+      .join(' ');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* Header */}
@@ -240,7 +257,7 @@ export default function Dashboard() {
                         <div className="flex flex-wrap gap-2">
                           {profile.criticalAllergies.map((allergy: string, i: number) => (
                             <span key={i} className="px-3 py-1 bg-red-100/70 dark:bg-red-950/40 text-red-700 dark:text-red-400 rounded-full text-xs font-bold border border-red-200 dark:border-red-900/50">
-                              {allergy}
+                              {formatUnderscores(allergy)}
                             </span>
                           ))}
                         </div>
@@ -258,7 +275,7 @@ export default function Dashboard() {
                         <div className="flex flex-wrap gap-2">
                           {profile.medicalConditions.map((condition: string, i: number) => (
                             <span key={i} className="px-3 py-1 bg-orange-100/70 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 rounded-full text-xs font-bold border border-orange-200 dark:border-orange-900/50">
-                              {condition}
+                              {formatUnderscores(condition)}
                             </span>
                           ))}
                         </div>
@@ -278,7 +295,7 @@ export default function Dashboard() {
                         <div key={i} className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
                           <div>
                             <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{contact.name}</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase mt-0.5">{contact.relationship}</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase mt-0.5">{formatUnderscores(contact.relationship)}</p>
                           </div>
                           <a 
                             href={`tel:${contact.phone}`}
