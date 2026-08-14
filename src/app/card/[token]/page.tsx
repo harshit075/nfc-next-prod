@@ -282,11 +282,6 @@ export default function CardProfileViewer() {
                 ))}
               </select>
             </div>
-
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#F0FDF4] border border-[#DCFCE7] rounded-full text-[#15803D] text-xs font-bold shadow-xs">
-              <Check className="h-3.5 w-3.5 text-[#16A34A] stroke-[3]" />
-              <span>{translate('verified')}</span>
-            </div>
           </div>
         </div>
 
@@ -382,78 +377,6 @@ export default function CardProfileViewer() {
                   </div>
                 </div>
 
-                {/* Critical Allergies Box */}
-                <div className="bg-gradient-to-br from-[#FFF1F2] to-[#FFE4E6] p-5 rounded-3xl border border-[#FECDD3] space-y-4 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-[#E11D48]" />
-                    <span className="text-xs font-extrabold text-[#9F1239] tracking-wider uppercase">
-                      {translate('critical_allergies_detected')}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {allergies.length > 0 ? (
-                      allergies.map((allergy, i) => (
-                        <div key={i} className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-[#FDA4AF] rounded-full shadow-xs">
-                          <span className="w-2 h-2 rounded-full bg-[#E11D48]" />
-                          <span className="text-xs font-bold text-[#9F1239] uppercase">
-                            {translate(allergy)}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-sm font-medium text-[#64748B] italic">{translate('none')}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Emergency Actions Panel */}
-                <div className="space-y-3">
-                  {/* Alert Family SOS */}
-                  <button
-                    onClick={() => alert('Simulating emergency alert broadcasts to family contacts...')}
-                    className="w-full bg-gradient-to-r from-[#B91C1C] to-[#EF4444] rounded-2xl p-4 flex items-center justify-between text-white border border-white/10 shadow-md hover:brightness-105 transition cursor-pointer text-left group"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="p-2.5 bg-white/20 rounded-full shrink-0 group-hover:scale-105 transition">
-                        <Bell className="h-6 w-6 text-white stroke-[2.5]" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black tracking-tight leading-tight uppercase">{translate('alert_family')}</h3>
-                        <p className="text-xs font-medium text-white/85 mt-0.5">{translate('alert_family_sub')}</p>
-                      </div>
-                    </div>
-                    <span className="text-white/80 font-bold shrink-0 text-lg group-hover:translate-x-1 transition">➔</span>
-                  </button>
-
-                  {/* Dual Action Buttons */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => alert('Calling Emergency Services 108...')}
-                      className="bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] rounded-2xl p-3.5 flex items-center gap-3 text-white border border-white/10 shadow-sm hover:brightness-105 transition cursor-pointer text-left"
-                    >
-                      <div className="p-2 bg-white/20 rounded-full shrink-0">
-                        <Phone className="h-4.5 w-4.5 text-white fill-current stroke-none" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-extrabold leading-tight">{translate('call_108')}</h4>
-                        <p className="text-[10.5px] font-medium text-white/85 mt-0.5">{translate('ambulance')}</p>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => alert('Preparing secure hospital telemetry stream...')}
-                      className="bg-gradient-to-r from-[#0F766E] to-[#0D9488] rounded-2xl p-3.5 flex items-center gap-3 text-white border border-white/10 shadow-sm hover:brightness-105 transition cursor-pointer text-left"
-                    >
-                      <div className="p-2 bg-white/20 rounded-full shrink-0">
-                        <span className="text-sm font-bold text-white">🏥</span>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-extrabold leading-tight">{translate('share_data')}</h4>
-                        <p className="text-[10.5px] font-medium text-white/85 mt-0.5">{translate('with_hospital')}</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
 
                 {/* HIPAA Disclaimer Footer */}
                 <div className="pt-1 flex items-center justify-center gap-2 text-center text-[#64748B]">
