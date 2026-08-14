@@ -45,6 +45,23 @@ export default function Home() {
     localStorage.setItem('swasthyatap_lang', newLang);
   };
 
+  const formatUnderscores = (str: string): string => {
+    if (!str) return '';
+    let clean = str;
+    if (clean.endsWith('_label')) {
+      clean = clean.slice(0, -6);
+    } else if (clean.endsWith('_filter')) {
+      clean = clean.slice(0, -7);
+    }
+    if (!clean.includes('_')) {
+      return clean.charAt(0).toUpperCase() + clean.slice(1);
+    }
+    return clean
+      .split('_')
+      .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1) : '')
+      .join(' ');
+  };
+
   const translate = (key: string, fallback: string): string => {
     const lang = selectedLanguage || 'English';
     const medDict = MEDICAL_DATA_TRANSLATIONS[lang] || MEDICAL_DATA_TRANSLATIONS['English'] || {};
@@ -56,7 +73,7 @@ export default function Home() {
     if (dict[key]) return dict[key];
     if (dict[normalizedKey]) return dict[normalizedKey];
 
-    return fallback;
+    return formatUnderscores(fallback || key);
   };
 
   const renderNfcStatus = (): string => {
